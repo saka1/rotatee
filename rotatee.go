@@ -1,10 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"os"
 )
+
+var log = logrus.New()
 
 type Rotatee struct {
 	setting RotateeSetting
@@ -19,7 +21,7 @@ type RotateeSetting struct {
 }
 
 func (r *Rotatee) start() {
-	fmt.Println("started")
+	log.WithFields(logrus.Fields{"Rotatee": r}).Debug("Start rotatee")
 	writeCh := make(chan []byte)
 	// writer loop
 	go func() {
@@ -39,22 +41,26 @@ func (r *Rotatee) start() {
 	for {
 		len, err := reader.Read(readBuf)
 		if err != nil {
-			panic("Writer goroutine IO failed")
+			log.Panic("Writer goroutine IO failed")
 		}
 		// do copy because 'content' is shared among goroutine(s)
 		content := make([]byte, len)
 		copy(content, readBuf[:len])
 		writeCh <- content
 	}
-	return
 }
 
 func main() {
+	// setup logger
+	log.Level = logrus.DebugLevel //TODO
+	log.Out = os.Stdout
+	log.Debug("At main")
+
 	app := cli.NewApp()
 	app.Name = "rotatee"
 	app.Usage = "advanced tee, advanced input rotation"
 	app.Action = func(c *cli.Context) error {
-		fmt.Printf("Args: %q\n", c.Args())
+		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
 		rotatee := newRotatee(RotateeSetting{
 			verbose: false,
 		})
