@@ -5,46 +5,14 @@ import (
 	"io"
 )
 
-const (
-	EVENT_TYPE_PAYLOAD = iota
-	EVENT_TYPE_CHANGE_WRITE_TARGET
-)
-
-type Event struct {
-	eventType int
-
-	// PAYLOAD
-	payload []byte
-
-	// NEW_WRITE_TARGET
-	writeTarget io.Writer
-
-	fileName string
-}
-
-func emptyEvent(eventType int) Event {
-	return Event{eventType, nil, nil, ""}
-}
-
-func NewPayload(payload []byte) Event {
-	ev := emptyEvent(EVENT_TYPE_PAYLOAD)
-	ev.payload = payload
-	return ev
-}
-
-func NewWriteTarget() Event {
-	ev := emptyEvent(EVENT_TYPE_CHANGE_WRITE_TARGET)
-	return ev
-}
-
 type Writer struct {
 }
 
-func newWriter() Writer {
+func NewWriter() Writer {
 	return Writer{}
 }
 
-func (w *Writer) Start(in chan Event, out chan Event) {
+func (w Writer) Run(in chan Event, out chan Event) {
 	log.Debug("Start writer")
 	var writer io.Writer
 	for {

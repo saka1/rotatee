@@ -8,7 +8,7 @@ func newScaler(limit uint64) Scaler {
 	return Scaler{limit}
 }
 
-func (s *Scaler) Start(in chan Event, out chan Event) {
+func (s Scaler) Run(in chan Event, out chan Event) {
 	var count uint64 = 0
 	for {
 		event, ok := <-in
@@ -31,7 +31,7 @@ func (s *Scaler) Start(in chan Event, out chan Event) {
 				copy(secondPayload, event.payload[acceptable:])
 				out <- NewPayload(secondPayload)
 				// update counter
-				count = len(secondPayload)
+				count = uint64(len(secondPayload))
 			} else {
 				out <- event
 				count += uint64(len(event.payload))

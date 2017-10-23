@@ -27,7 +27,7 @@ func (e *EventPipe) Add(stage Stage) {
 	e.channels = append(e.channels, make(chan Event))
 }
 
-func (e *EventPipe) Start(ev Event) {
+func (e *EventPipe) Start() {
 	// create "tail" channel
 	// all messages received by the channel will be dropped
 	tailCh := make(chan Event)
@@ -47,5 +47,33 @@ func (e *EventPipe) Start(ev Event) {
 	e.channels = append(e.channels, tailCh)
 	for i, stage := range e.stages {
 		go stage.Run(e.channels[i], e.channels[i+1])
+	}
+}
+
+func (e *EventPipe) InputCh() chan Event {
+	return e.channels[0]
+}
+
+type EventPipeGroup struct {
+	pipes []EventPipe
+}
+
+func NewEventPipeGroup() *EventPipeGroup {
+	return &EventPipeGroup{}
+}
+
+func (e *EventPipeGroup) Add(pipe EventPipe) {
+	e.pipes = append(e.pipes, pipe)
+}
+
+func (e *EventPipeGroup) Start() {
+	for _, p := range e.pipes {
+		p.Start()
+	}
+}
+
+func (e *EventPipeGroup) Broadcast(ev Event) {
+	for _, p := range e.pipes {
+		p.InputCh() <- ev
 	}
 }

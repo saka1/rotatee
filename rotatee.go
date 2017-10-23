@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"os"
+	"time"
 )
 
 var log = logrus.New()
@@ -17,24 +18,29 @@ func newRotatee(setting RotateeSetting) *Rotatee {
 }
 
 type RotateeSetting struct {
+	args    []string
 	verbose bool
+}
+
+func setupEventPipe(arg string) EventPipe {
+	pipe := NewEventPipe()
+	pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
+	pipe.Add(NewFormatEval(arg))
+	pipe.Add(NewRoller())
+	pipe.Add(NewWriter())
+	return pipe
 }
 
 func (r *Rotatee) start() {
 	log.WithFields(logrus.Fields{"Rotatee": r}).Debug("Start rotatee")
-	writeCh := make(chan []byte)
-	// writer loop
-	go func() {
-		writer := os.Stdin
-		for {
-			chunk := <-writeCh
-			_, err := writer.Write(chunk)
-			if err != nil {
-				panic("Reader goroutine IO failed")
-			}
-		}
-	}()
-
+	// init pipe
+	pipeGroup := NewEventPipeGroup()
+	for _, arg := range r.setting.args {
+		pipeGroup.Add(setupEventPipe(arg))
+	}
+	pipeGroup.Start()
+	// init first destination
+	pipeGroup.Broadcast(NewWriteTarget())
 	// reader loop
 	reader := os.Stdin
 	readBuf := make([]byte, 1024)
@@ -46,23 +52,43 @@ func (r *Rotatee) start() {
 		// do copy because 'content' is shared among goroutine(s)
 		content := make([]byte, len)
 		copy(content, readBuf[:len])
-		writeCh <- content
+		pipeGroup.Broadcast(NewPayload(content))
+		// Also, write to stdout
+		os.Stdout.Write(content)
 	}
 }
 
 func main() {
-	// setup logger
-	log.Level = logrus.DebugLevel //TODO
-	log.Out = os.Stdout
-	log.Debug("At main")
-
 	app := cli.NewApp()
 	app.Name = "rotatee"
 	app.Usage = "advanced tee, advanced input rotation"
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "verbose",
+			Usage: "verbose logging to stderr",
+		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "enable debug mode (very verbose logging to stderr)",
+		},
+	}
 	app.Action = func(c *cli.Context) error {
+		verbose := c.Bool("verbose")
+		// setup logger
+		log.Out = os.Stderr
+		if verbose {
+			log.Level = logrus.InfoLevel
+		} else {
+			log.Level = logrus.WarnLevel
+		}
+		if c.Bool("debug") {
+			log.Level = logrus.DebugLevel
+		}
 		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
+		// start rotatee
 		rotatee := newRotatee(RotateeSetting{
-			verbose: false,
+			args:    c.Args(),
+			verbose: verbose,
 		})
 		rotatee.start()
 		return nil

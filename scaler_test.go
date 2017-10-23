@@ -9,7 +9,7 @@ func Test_scaler_nonInterleave(t *testing.T) {
 	scaler := newScaler(5)
 	in <- NewPayload([]byte("hello"))
 	close(in)
-	scaler.Start(in, out)
+	scaler.Run(in, out)
 	if ev := <-out; string(ev.payload) != "hello" {
 		t.Fail()
 	}
@@ -23,7 +23,7 @@ func Test_scaler_interleave(t *testing.T) {
 	scaler := newScaler(4)
 	in <- NewPayload([]byte("hello"))
 	close(in)
-	scaler.Start(in, out)
+	scaler.Run(in, out)
 	if ev := <-out; string(ev.payload) != "hell" {
 		t.Fail()
 	}
