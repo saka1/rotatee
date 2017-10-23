@@ -30,9 +30,11 @@ func (s *Scaler) Start(in chan Event, out chan Event) {
 				secondPayload := make([]byte, uint64(len(event.payload))-acceptable)
 				copy(secondPayload, event.payload[acceptable:])
 				out <- NewPayload(secondPayload)
+				// update counter
+				count = len(secondPayload)
 			} else {
-				count += uint64(len(event.payload))
 				out <- event
+				count += uint64(len(event.payload))
 			}
 		default:
 			out <- event
