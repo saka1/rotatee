@@ -58,6 +58,18 @@ func (r *Rotatee) start() {
 	}
 }
 
+func setupLogger(verboe bool, debug bool) {
+	log.Out = os.Stderr
+	if verbose {
+		log.Level = logrus.InfoLevel
+	} else {
+		log.Level = logrus.WarnLevel
+	}
+	if debug {
+		log.Level = logrus.DebugLevel
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "rotatee"
@@ -73,19 +85,9 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) error {
-		verbose := c.Bool("verbose")
-		// setup logger
-		log.Out = os.Stderr
-		if verbose {
-			log.Level = logrus.InfoLevel
-		} else {
-			log.Level = logrus.WarnLevel
-		}
-		if c.Bool("debug") {
-			log.Level = logrus.DebugLevel
-		}
+		verbose, debug := c.Bool("verbose"), c.Bool("debug")
+		setupLogger(verbose, debug)
 		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
-		// start rotatee
 		rotatee := newRotatee(RotateeSetting{
 			args:    c.Args(),
 			verbose: verbose,
