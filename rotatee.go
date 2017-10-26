@@ -58,7 +58,7 @@ func (r *Rotatee) start() {
 	}
 }
 
-func setupLogger(verboe bool, debug bool) {
+func setupLogger(verbose bool, debug bool) {
 	log.Out = os.Stderr
 	if verbose {
 		log.Level = logrus.InfoLevel
