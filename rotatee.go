@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"io"
 	"os"
 	"time"
 )
@@ -47,6 +48,10 @@ func (r *Rotatee) start() {
 	for {
 		len, err := reader.Read(readBuf)
 		if err != nil {
+			if err == io.EOF {
+				pipeGroup.Stop()
+				os.Exit(0)
+			}
 			log.Panic("Writer goroutine IO failed")
 		}
 		// do copy because 'content' is shared among goroutine(s)

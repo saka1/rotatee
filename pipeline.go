@@ -13,12 +13,14 @@ type Stage interface {
 type EventPipe struct {
 	stages   []Stage
 	channels []chan Event
+	eos      chan bool
 }
 
 func NewEventPipe() EventPipe {
 	return EventPipe{
 		stages:   []Stage{},
 		channels: []chan Event{},
+		eos:      make(chan bool),
 	}
 }
 
@@ -29,14 +31,13 @@ func (e *EventPipe) Add(stage Stage) {
 
 func (e *EventPipe) Start() {
 	// create "tail" channel
-	// all messages received by the channel will be dropped
+	// all messages should NOT be handled by this tail process
 	tailCh := make(chan Event)
-	// drop message prosess(used as tail process)
 	go func() {
 		for {
 			event, ok := <-tailCh
 			if !ok {
-				//TODO detect shutdown here
+				e.eos <- true
 				return
 			}
 			log.WithFields(logrus.Fields{
@@ -52,6 +53,12 @@ func (e *EventPipe) Start() {
 
 func (e *EventPipe) InputCh() chan Event {
 	return e.channels[0]
+}
+
+func (e *EventPipe) Stop() {
+	ch := e.InputCh()
+	close(ch)
+	<-e.eos
 }
 
 type EventPipeGroup struct {
@@ -75,5 +82,11 @@ func (e *EventPipeGroup) Start() {
 func (e *EventPipeGroup) Broadcast(ev Event) {
 	for _, p := range e.pipes {
 		p.InputCh() <- ev
+	}
+}
+
+func (e *EventPipeGroup) Stop() {
+	for _, p := range e.pipes {
+		p.Stop()
 	}
 }
