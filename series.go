@@ -30,7 +30,7 @@ func DetectSeries(format string, t0 time.Time) Series {
 }
 
 /*
- * Series is a infinite list that generated from strftime's pattern sucn as:
+ * Series is a infinite time.Time list that generated from strftime's pattern sucn as:
  * "hoge-%S" => ["hoge-13", "hoge-14", "hoge-15", ...]
  * "%y-%m-%d" => ["2016-2-1", "2016-2-2", ...]
  * Iteration starts at `t0`.
