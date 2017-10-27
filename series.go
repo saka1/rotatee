@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	FORMAT_UNIT_REGEXP = regexp.MustCompile("%[sMHdmy]")
+	FORMAT_UNIT_REGEXP = regexp.MustCompile("%[SMHdmy]")
 	FORMAT_UNIT_SCORE  = map[string]int{
-		"s": 1,
+		"S": 1,
 		"M": 60,
 		"H": 60 * 60,
 		"d": 60 * 60 * 24,
