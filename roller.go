@@ -4,6 +4,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"math"
 	"os"
+	"regexp"
+	"strconv"
 )
 
 type Roller struct {
@@ -11,7 +13,9 @@ type Roller struct {
 }
 
 func NewRoller() Roller {
-	return Roller{-1}
+	//TODO
+	//return Roller{-1}
+	return Roller{3}
 }
 
 func NewRollerWithHistory(historySize int) Roller {
@@ -39,26 +43,32 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 		switch event.eventType {
 		case EVENT_TYPE_CHANGE_WRITE_TARGET:
 			currentFile.Close()
-			log.WithFields(logrus.Fields{"file": currentFile}).Info("Current file closed")
+			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
 		case EVENT_TYPE_INIT:
-			f := newFile(event.fileName) //TODO eval fileName( %i to history number )
-			log.WithFields(logrus.Fields{"fileName": f.Name()}).Info("New file opened")
 			if historyEnabled {
-				if name := window.nextPushedOut(); name != "" {
-					log.WithFields(logrus.Fields{"name": name}).Info("Remove oldest file at history rotation")
-					os.Remove(name)
-					//TODO error handle
-				}
-				window.slide(event.fileName, func(old string, new string) {
+				lastName := window.slide(event.fileName, func(old string, new string) {
 					log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
 					os.Rename(old, new)
 					//TODO error handle
 				})
+				if lastName != "" {
+					log.WithFields(logrus.Fields{"name": lastName}).Info("Remove oldest file at history rotation")
+					os.Remove(lastName)
+					//TODO error handle
+				}
+				currentFile = newFile(window.current())
+			} else {
+				currentFile = newFile(event.fileName)
 			}
-			currentFile, event.writeTarget = f, f
-			out <- event
+			log.WithFields(logrus.Fields{"currentFile": currentFile.Name()}).Info("New file opened")
+		case EVENT_TYPE_PAYLOAD:
+			_, err := currentFile.Write(event.payload)
+			if err != nil {
+				log.WithFields(logrus.Fields{"err": err}).Panic("Reader goroutine IO failed")
+			}
 		default:
+			log.Warn("Unknown event type")
 			out <- event
 		}
 	}
@@ -85,22 +95,38 @@ func newHistoryWindow(limit int) historyWindow {
 	}
 }
 
-func (hw *historyWindow) nextPushedOut() string {
-	if len(hw.names) < hw.limit {
-		return ""
-	}
-	return hw.names[0]
+func (hw *historyWindow) current() string {
+	//TODO range check
+	return evalHistory(hw.names[0], 0)
 }
 
-func (hw *historyWindow) slide(name string, f func(old string, new string)) {
+func (hw *historyWindow) last() string {
+	if len(hw.names) == 0 {
+		return ""
+	}
+	return evalHistory(hw.names[len(hw.names)-1], len(hw.names)-1)
+}
+
+func (hw *historyWindow) slide(format string, f func(old string, new string)) string {
 	if len(hw.names) < hw.limit {
-		hw.names = append(hw.names, name)
-		return
+		hw.names = append(hw.names, format)
+		return ""
 	}
-	old := hw.names
-	new := append(old[1:], name)
-	hw.names = new
-	for i, o := range old {
-		f(o, new[i])
+	hw.names = append(hw.names, format)
+	for i := 0; i < hw.limit-1; i++ { //TODO fix: rotation order must be reverse
+		old := evalHistory(hw.names[i], i)
+		new := evalHistory(hw.names[i+1], i+1)
+		f(old, new)
 	}
+	last := evalHistory(hw.names[0], hw.limit)
+	hw.names = hw.names[1:]
+	return last
+}
+
+func evalHistory(format string, history int) string {
+	r := regexp.MustCompile("([^%])%i") //TODO refactor
+	if history == 0 {
+		return r.ReplaceAllString(format, "${1}")
+	}
+	return r.ReplaceAllString(format, "${1}"+strconv.FormatInt(int64(history), 10))
 }

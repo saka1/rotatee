@@ -33,7 +33,6 @@ func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 		pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
 		pipe.Add(NewFormatEval(arg))
 		pipe.Add(NewRoller())
-		pipe.Add(NewWriter())
 		pipeGroup.Add(&pipe)
 	}
 	return pipeGroup

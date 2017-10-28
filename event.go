@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"time"
 )
 
@@ -12,15 +11,14 @@ const (
 )
 
 type Event struct {
-	eventType   int
-	payload     []byte
-	writeTarget io.Writer
-	fileName    string
-	timestamp   time.Time
+	eventType int
+	payload   []byte
+	fileName  string
+	timestamp time.Time
 }
 
 func emptyEvent(eventType int) Event {
-	return Event{eventType, nil, nil, "", time.Now()}
+	return Event{eventType, nil, "", time.Now()}
 }
 
 func NewPayload(payload []byte) Event {

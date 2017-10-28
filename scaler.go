@@ -18,6 +18,7 @@ func (s Scaler) Run(in chan Event, out chan Event) {
 		}
 		switch event.eventType {
 		case EVENT_TYPE_PAYLOAD:
+			//TODO fix if rest is larger than payload
 			if count+int64(len(event.payload)) > s.limit {
 				// send head
 				acceptable := s.limit - count
