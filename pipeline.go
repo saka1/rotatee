@@ -14,6 +14,7 @@ type EventPipe struct {
 	stages   []Stage
 	channels []chan Event
 	eos      chan bool
+	closed   bool
 }
 
 func NewEventPipe() EventPipe {
@@ -21,6 +22,7 @@ func NewEventPipe() EventPipe {
 		stages:   []Stage{},
 		channels: []chan Event{},
 		eos:      make(chan bool),
+		closed:   false,
 	}
 }
 
@@ -38,6 +40,7 @@ func (e *EventPipe) Start() {
 			event, ok := <-tailCh
 			if !ok {
 				e.eos <- true
+				log.Debug("tail of pipeline closed")
 				return
 			}
 			log.WithFields(logrus.Fields{
@@ -56,20 +59,23 @@ func (e *EventPipe) InputCh() chan Event {
 }
 
 func (e *EventPipe) Stop() {
-	ch := e.InputCh()
-	close(ch)
-	<-e.eos
+	close(e.InputCh())
+	e.closed = <-e.eos
+}
+
+func (e *EventPipe) Closed() bool {
+	return e.closed
 }
 
 type EventPipeGroup struct {
-	pipes []EventPipe
+	pipes []*EventPipe
 }
 
-func NewEventPipeGroup() *EventPipeGroup {
-	return &EventPipeGroup{}
+func NewEventPipeGroup() EventPipeGroup {
+	return EventPipeGroup{}
 }
 
-func (e *EventPipeGroup) Add(pipe EventPipe) {
+func (e *EventPipeGroup) Add(pipe *EventPipe) {
 	e.pipes = append(e.pipes, pipe)
 }
 
@@ -89,4 +95,12 @@ func (e *EventPipeGroup) Stop() {
 	for _, p := range e.pipes {
 		p.Stop()
 	}
+}
+
+func (e *EventPipeGroup) Closed() bool {
+	var result bool = true
+	for _, p := range e.pipes {
+		result = result && p.Closed()
+	}
+	return result
 }

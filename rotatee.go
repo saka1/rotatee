@@ -22,7 +22,7 @@ type RotateeSetting struct {
 	verbose bool
 }
 
-func setupEventPipe(setting RotateeSetting) *EventPipeGroup {
+func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 	pipeGroup := NewEventPipeGroup()
 	for _, arg := range setting.args {
 		pipe := NewEventPipe()
@@ -30,7 +30,7 @@ func setupEventPipe(setting RotateeSetting) *EventPipeGroup {
 		pipe.Add(NewFormatEval(arg))
 		pipe.Add(NewRoller())
 		pipe.Add(NewWriter())
-		pipeGroup.Add(pipe)
+		pipeGroup.Add(&pipe)
 	}
 	return pipeGroup
 }
@@ -61,5 +61,5 @@ func (r *Rotatee) Start() {
 	pipeGroup := setupEventPipe(r.setting)
 	pipeGroup.Start()
 	pipeGroup.Broadcast(NewWriteTarget())
-	teeLoop(pipeGroup)
+	teeLoop(&pipeGroup)
 }
