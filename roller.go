@@ -17,6 +17,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 	for {
 		event, ok := <-in
 		if !ok {
+			closeCurrentFile(currentFile)
 			close(out)
 			return
 		}
@@ -28,15 +29,19 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 				continue
 			}
 			log.WithFields(logrus.Fields{"fileName": f.Name()}).Info("New file opened")
-			if currentFile != nil { // MEMO: currentFile is nil when the first time
-				currentFile.Close()
-			}
+			closeCurrentFile(currentFile)
 			currentFile = f
 			event.writeTarget = f
 			out <- event
 		default:
 			out <- event
 		}
+	}
+}
+
+func closeCurrentFile(file *os.File) {
+	if file != nil { // MEMO: currentFile is nil when the first time
+		file.Close()
 	}
 }
 
@@ -47,4 +52,16 @@ func newFile(fileName string) *os.File {
 		return nil
 	}
 	return file
+}
+
+type historyWindow struct {
+	names []string
+}
+
+func newHistoryWindow() historyWindow {
+	return historyWindow{names: []string{}}
+}
+
+func (hw *historyWindow) add(name string) {
+	hw.names = append(hw.names, name)
 }
