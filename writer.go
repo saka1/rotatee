@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"io"
 )
 
@@ -29,9 +29,9 @@ func (w Writer) Run(in chan Event, out chan Event) {
 			}
 			_, err := writer.Write(event.payload)
 			if err != nil {
-				log.Panic("Reader goroutine IO failed")
+				log.WithFields(logrus.Fields{"err": err}).Panic("Reader goroutine IO failed")
 			}
-		case EVENT_TYPE_CHANGE_WRITE_TARGET:
+		case EVENT_TYPE_INIT, EVENT_TYPE_CHANGE_WRITE_TARGET:
 			writer = event.writeTarget
 		default:
 			log.Error("Unknown event type")

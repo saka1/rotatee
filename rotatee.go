@@ -28,7 +28,6 @@ func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 	for _, arg := range setting.args {
 		pipe := NewEventPipe()
 		if setting.maxFileSize != 0 {
-			log.Error("invalid size format")
 			pipe.Add(NewScaler(setting.maxFileSize))
 		}
 		pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
@@ -65,6 +64,6 @@ func (r *Rotatee) Start() {
 	log.WithFields(logrus.Fields{"Rotatee": r}).Debug("Start rotatee")
 	pipeGroup := setupEventPipe(r.setting)
 	pipeGroup.Start()
-	pipeGroup.Broadcast(NewWriteTarget())
+	pipeGroup.Broadcast(NewInit())
 	teeLoop(&pipeGroup)
 }

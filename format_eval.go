@@ -21,7 +21,7 @@ func (fe FormatEvaluator) Run(in chan Event, out chan Event) {
 			return
 		}
 		switch event.eventType {
-		case EVENT_TYPE_CHANGE_WRITE_TARGET:
+		case EVENT_TYPE_INIT, EVENT_TYPE_CHANGE_WRITE_TARGET:
 			event.fileName = strftime.Format(fe.format, event.timestamp)
 			out <- event
 		default:
