@@ -4,7 +4,7 @@ type Scaler struct {
 	limit uint64
 }
 
-func newScaler(limit uint64) Scaler {
+func NewScaler(limit uint64) Scaler {
 	return Scaler{limit}
 }
 

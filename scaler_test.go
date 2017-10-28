@@ -6,7 +6,7 @@ import (
 
 func Test_scaler_nonInterleave(t *testing.T) {
 	in, out := make(chan Event, 32), make(chan Event, 32)
-	scaler := newScaler(5)
+	scaler := NewScaler(5)
 	in <- NewPayload([]byte("hello"))
 	close(in)
 	scaler.Run(in, out)
@@ -20,7 +20,7 @@ func Test_scaler_nonInterleave(t *testing.T) {
 
 func Test_scaler_interleave(t *testing.T) {
 	in, out := make(chan Event, 32), make(chan Event, 32)
-	scaler := newScaler(4)
+	scaler := NewScaler(4)
 	in <- NewPayload([]byte("hello"))
 	close(in)
 	scaler.Run(in, out)
