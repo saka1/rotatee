@@ -18,14 +18,19 @@ func NewRotatee(setting RotateeSetting) *Rotatee {
 }
 
 type RotateeSetting struct {
-	args    []string
-	verbose bool
+	args        []string
+	verbose     bool
+	maxFileSize int64
 }
 
 func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 	pipeGroup := NewEventPipeGroup()
 	for _, arg := range setting.args {
 		pipe := NewEventPipe()
+		if setting.maxFileSize != 0 {
+			log.Error("invalid size format")
+			pipe.Add(NewScaler(setting.maxFileSize))
+		}
 		pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
 		pipe.Add(NewFormatEval(arg))
 		pipe.Add(NewRoller())

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/alecthomas/units"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"os"
@@ -31,14 +32,28 @@ func main() {
 			Name:  "debug",
 			Usage: "enable debug mode (very verbose logging to stderr)",
 		},
+		cli.StringFlag{
+			Name:  "s, size",
+			Usage: "max file size",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
+		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
 		verbose, debug := c.Bool("verbose"), c.Bool("debug")
 		setupLogger(verbose, debug)
-		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
+		maxFileSize, err := units.ParseBase2Bytes("0B")
+		if c.GlobalIsSet("size") {
+			maxFileSize, err = units.ParseBase2Bytes(c.String("size"))
+			if err != nil {
+				log.Error("invalid size format")
+				cli.ShowAppHelp(c)
+				os.Exit(1)
+			}
+		}
 		rotatee := NewRotatee(RotateeSetting{
-			args:    c.Args(),
-			verbose: verbose,
+			args:        c.Args(),
+			verbose:     verbose,
+			maxFileSize: int64(maxFileSize),
 		})
 		rotatee.Start()
 		return nil
