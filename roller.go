@@ -104,7 +104,7 @@ func (hw *historyWindow) last() string {
 	if len(hw.names) == 0 {
 		return ""
 	}
-	return evalHistory(hw.names[len(hw.names)-1], len(hw.names)-1)
+	return evalHistory(hw.names[0], len(hw.names)-1)
 }
 
 func (hw *historyWindow) slide(format string, f func(old string, new string)) string {
@@ -113,10 +113,10 @@ func (hw *historyWindow) slide(format string, f func(old string, new string)) st
 		return ""
 	}
 	hw.names = append(hw.names, format)
-	for i := 0; i < hw.limit-1; i++ { //TODO fix: rotation order must be reverse
-		old := evalHistory(hw.names[i], i)
-		new := evalHistory(hw.names[i+1], i+1)
-		f(old, new)
+	for i := 0; i < hw.limit-1; i++ {
+		oldName := evalHistory(hw.names[i], len(hw.names)-i-1)
+		newName := evalHistory(hw.names[i+1], len(hw.names)-i-2)
+		f(oldName, newName)
 	}
 	last := evalHistory(hw.names[0], hw.limit)
 	hw.names = hw.names[1:]
