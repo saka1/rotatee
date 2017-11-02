@@ -43,3 +43,4 @@ hoge-13.log
 - Size-based rolling
 - Max-history(limit number of files to keep)
 - Rolling with archive
+- Improve some inconsistent behavior

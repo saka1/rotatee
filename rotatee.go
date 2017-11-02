@@ -21,6 +21,7 @@ type RotateeSetting struct {
 	args        []string
 	verbose     bool
 	maxFileSize int64
+	historySize int
 }
 
 func setupEventPipe(setting RotateeSetting) EventPipeGroup {

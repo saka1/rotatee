@@ -20,7 +20,7 @@ func Test_historyWindow_test(t *testing.T) {
 			t.Fatal()
 		}
 	}
-	win := newHistoryWindow(3)
+	win := newFixedHistoryWindow(3)
 	win.slide(format, f)
 	t.Log("-------------")
 	win.slide(format, f)

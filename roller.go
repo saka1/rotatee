@@ -2,33 +2,27 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"math"
 	"os"
 	"regexp"
 	"strconv"
 )
 
 type Roller struct {
-	historySize int
-	historyEnabled bool
+	window historyWindow
 }
 
 func NewRoller() Roller {
-	return Roller{-1, false}
+	return Roller{newNullHistoryWindow()}
 }
 
 func NewRollerWithHistory(historySize int) Roller {
-	if historySize < -1 {
-		panic("Roller: invalid historySize value (BUG)")
-	} else if historySize == 0 { // 0 means infinity
-		historySize = math.MaxInt32
-	}
-	return Roller{historySize, historySize != -1}
+	window := newFixedHistoryWindow(historySize)
+	return Roller{window}
 }
 
 func (roller Roller) Run(in chan Event, out chan Event) {
 	var currentFile *os.File = nil
-	window := newHistoryWindow(roller.historySize)
+
 	for {
 		event, ok := <-in
 		if !ok {
@@ -49,26 +43,22 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
 		case EVENT_TYPE_INIT:
-			if roller.historyEnabled {
-				lastName := window.slide(event.fileName, func(old string, new string) {
-					log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
-					err := os.Rename(old, new)
-					if err != nil {
-						log.WithFields(logrus.Fields{"err": err.Error()}).Error("Fail to rename file when rotation")
-					}
-				})
-				if lastName != "" {
-					log.WithFields(logrus.Fields{"name": lastName}).Info("Remove oldest file at history rotation")
-					err := os.Remove(lastName)
-					if err != nil {
-						log.WithFields(logrus.Fields{"name": lastName}).Error("Fail to remove file when rotation")
-					}
-					//TODO error handle
+			lastName := roller.window.slide(event.fileName, func(old string, new string) {
+				log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
+				err := os.Rename(old, new)
+				if err != nil {
+					log.WithFields(logrus.Fields{"err": err.Error()}).Error("Fail to rename file when rotation")
 				}
-				currentFile = newFile(window.current())
-			} else {
-				currentFile = newFile(event.fileName)
+			})
+			if lastName != "" {
+				log.WithFields(logrus.Fields{"name": lastName}).Info("Remove oldest file at history rotation")
+				err := os.Remove(lastName)
+				if err != nil {
+					log.WithFields(logrus.Fields{"name": lastName}).Error("Fail to remove file when rotation")
+				}
+				//TODO error handle
 			}
+			currentFile = newFile(roller.window.current())
 			log.WithFields(logrus.Fields{"currentFile": currentFile.Name()}).Info("New file opened")
 		case EVENT_TYPE_PAYLOAD:
 			_, err := currentFile.Write(event.payload)
@@ -91,31 +81,37 @@ func newFile(fileName string) *os.File {
 	return file
 }
 
-type historyWindow struct {
+type historyWindow interface {
+	current() string
+	last() string
+	slide(format string, f func(old string, new string)) string
+}
+
+type fixedHistoryWindow struct {
 	limit int
 	names []string
 }
 
-func newHistoryWindow(limit int) historyWindow {
-	return historyWindow{
+func newFixedHistoryWindow(limit int) *fixedHistoryWindow {
+	return &fixedHistoryWindow{
 		limit: limit,
 		names: []string{},
 	}
 }
 
-func (hw *historyWindow) current() string {
+func (hw *fixedHistoryWindow) current() string {
 	//TODO range check
 	return evalHistory(hw.names[0], 0)
 }
 
-func (hw *historyWindow) last() string {
+func (hw *fixedHistoryWindow) last() string {
 	if len(hw.names) == 0 {
 		return ""
 	}
 	return evalHistory(hw.names[0], len(hw.names)-1)
 }
 
-func (hw *historyWindow) slide(format string, f func(old string, new string)) string {
+func (hw *fixedHistoryWindow) slide(format string, f func(old string, new string)) string {
 	// current and new names as slice
 	cNames := make([]string, len(hw.names))
 	copy(cNames, hw.names)
@@ -134,6 +130,29 @@ func (hw *historyWindow) slide(format string, f func(old string, new string)) st
 		return evalHistory(nNames[hw.limit], hw.limit)
 	}
 	hw.names = nNames
+	return ""
+}
+
+type nullHistoryWindow struct {
+	name string
+	count int
+}
+
+func newNullHistoryWindow() *nullHistoryWindow {
+	return &nullHistoryWindow{"", 0}
+}
+
+func (w *nullHistoryWindow) current() string {
+	return evalHistory(w.name, w.count)
+}
+
+func (w *nullHistoryWindow) last() string {
+	return ""
+}
+
+func (w *nullHistoryWindow) slide(format string, f func(old string, new string)) string {
+	w.count += 1
+	w.name = format
 	return ""
 }
 

@@ -36,6 +36,11 @@ func main() {
 			Name:  "s, size",
 			Usage: "max file size",
 		},
+		cli.IntFlag{
+			Name: "history",
+			Usage: "max number of files." +
+				"After file rotation, rotatee remove the oldest file if the count are exceeded",
+		},
 	}
 	app.Action = func(c *cli.Context) error {
 		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
@@ -50,10 +55,12 @@ func main() {
 				os.Exit(1)
 			}
 		}
+		historySize := c.GlobalInt("history")
 		rotatee := NewRotatee(RotateeSetting{
 			args:        c.Args(),
 			verbose:     verbose,
 			maxFileSize: int64(maxFileSize),
+			historySize: historySize,
 		})
 		rotatee.Start()
 		return nil
