@@ -10,26 +10,24 @@ import (
 
 type Roller struct {
 	historySize int
+	historyEnabled bool
 }
 
 func NewRoller() Roller {
-	//TODO
-	//return Roller{-1}
-	return Roller{3}
+	return Roller{-1, false}
 }
 
 func NewRollerWithHistory(historySize int) Roller {
 	if historySize < -1 {
-		panic("Roller: ivalid historySize value (BUG)")
+		panic("Roller: invalid historySize value (BUG)")
 	} else if historySize == 0 { // 0 means infinity
 		historySize = math.MaxInt32
 	}
-	return Roller{historySize}
+	return Roller{historySize, historySize != -1}
 }
 
 func (roller Roller) Run(in chan Event, out chan Event) {
 	var currentFile *os.File = nil
-	historyEnabled := roller.historySize != -1
 	window := newHistoryWindow(roller.historySize)
 	for {
 		event, ok := <-in
@@ -42,19 +40,29 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 		}
 		switch event.eventType {
 		case EVENT_TYPE_CHANGE_WRITE_TARGET:
-			currentFile.Close()
+			err := currentFile.Close()
+			if err != nil {
+				log.WithFields(
+					logrus.Fields{"err": err.Error(), "name": currentFile.Name(),
+					}).Error("Fail to close file when rotation")
+			}
 			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
 		case EVENT_TYPE_INIT:
-			if historyEnabled {
+			if roller.historyEnabled {
 				lastName := window.slide(event.fileName, func(old string, new string) {
 					log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
-					os.Rename(old, new)
-					//TODO error handle
+					err := os.Rename(old, new)
+					if err != nil {
+						log.WithFields(logrus.Fields{"err": err.Error()}).Error("Fail to rename file when rotation")
+					}
 				})
 				if lastName != "" {
 					log.WithFields(logrus.Fields{"name": lastName}).Info("Remove oldest file at history rotation")
-					os.Remove(lastName)
+					err := os.Remove(lastName)
+					if err != nil {
+						log.WithFields(logrus.Fields{"name": lastName}).Error("Fail to remove file when rotation")
+					}
 					//TODO error handle
 				}
 				currentFile = newFile(window.current())
@@ -108,19 +116,25 @@ func (hw *historyWindow) last() string {
 }
 
 func (hw *historyWindow) slide(format string, f func(old string, new string)) string {
-	if len(hw.names) < hw.limit {
-		hw.names = append(hw.names, format)
-		return ""
+	// current and new names as slice
+	cNames := make([]string, len(hw.names))
+	copy(cNames, hw.names)
+	nNames := append([]string{format}, hw.names...)
+	slideNum := len(cNames)
+	if len(cNames) >= hw.limit {
+		slideNum -= 0
 	}
-	hw.names = append(hw.names, format)
-	for i := 0; i < hw.limit-1; i++ {
-		oldName := evalHistory(hw.names[i], len(hw.names)-i-1)
-		newName := evalHistory(hw.names[i+1], len(hw.names)-i-2)
+	for i := slideNum - 1; i >= 0; i-- {
+		oldName := evalHistory(cNames[i], i)
+		newName := evalHistory(nNames[i], i+1)
 		f(oldName, newName)
 	}
-	last := evalHistory(hw.names[0], hw.limit)
-	hw.names = hw.names[1:]
-	return last
+	if len(cNames) >= hw.limit {
+		hw.names = nNames[:hw.limit]
+		return evalHistory(nNames[hw.limit], hw.limit)
+	}
+	hw.names = nNames
+	return ""
 }
 
 func evalHistory(format string, history int) string {
