@@ -38,6 +38,15 @@ hoge-12.log
 hoge-13.log
 ```
 
+Size-based rolling:
+```bash
+$ echo "abcdefg" | ./rotatee --size 3B /tmp/size%i
+abcdefg
+$ cat /tmp/size1 /tmp/size2 /tmp/size3
+abcdefg
+```
+
+
 ## TODO
 - Add more test cases
 - Size-based rolling
