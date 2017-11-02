@@ -18,25 +18,21 @@ func (s Scaler) Run(in chan Event, out chan Event) {
 		}
 		switch event.eventType {
 		case EVENT_TYPE_PAYLOAD:
-			//TODO fix if rest is larger than payload
-			if count+int64(len(event.payload)) > s.limit {
-				// send head
+			unprocessedPayload := event.payload
+			for count+int64(len(unprocessedPayload)) > s.limit {
 				acceptable := s.limit - count
-				firstPayload := make([]byte, acceptable)
-				copy(firstPayload, event.payload)
-				out <- NewPayload(firstPayload)
+				currentPayload := make([]byte, acceptable)
+				copy(currentPayload, unprocessedPayload)
+				out <- NewPayload(currentPayload)
 				// interleave rolling event
 				out <- NewWriteTarget()
-				// send rest
-				secondPayload := make([]byte, int64(len(event.payload))-acceptable)
-				copy(secondPayload, event.payload[acceptable:])
-				out <- NewPayload(secondPayload)
-				// update counter
-				count = int64(len(secondPayload))
-			} else {
-				out <- event
-				count += int64(len(event.payload))
+				unprocessedPayload = unprocessedPayload[acceptable:]
+				count = 0
 			}
+			lastPayload := make([]byte, len(unprocessedPayload))
+			copy(lastPayload, unprocessedPayload) //TODO optimize copy?
+			out <- NewPayload(lastPayload)
+			count = int64(len(lastPayload))
 		default:
 			out <- event
 		}
