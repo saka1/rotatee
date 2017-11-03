@@ -6,7 +6,7 @@ import (
 
 func Test_historyWindow_test(t *testing.T) {
 	count := 0
-	format := "name%i"
+	format := Format("name%i")
 	f := func(old string, new string) {
 		t.Logf("old, new = %v, %v", old, new)
 		count += 1

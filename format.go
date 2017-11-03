@@ -1,8 +1,14 @@
 package main
 
-import "regexp"
+import (
+	"regexp"
+	"strconv"
+)
 
-var REGEXP_FORMAT_HISTORY = regexp.MustCompile("[^%]%i")
+var (
+	formatHistorySpecRegexp   = regexp.MustCompile("[^%]%i")
+	formatHistoryCaptureRegxp = regexp.MustCompile("([^%])%i")
+)
 
 type Format string
 
@@ -11,5 +17,13 @@ func (f Format) String() string {
 }
 
 func (f Format) HasHistoryNumberSpec() bool {
-	return REGEXP_FORMAT_HISTORY.FindString(f.String()) != ""
+	return formatHistorySpecRegexp.FindString(f.String()) != ""
+}
+
+func (f Format) evalHistory(history int) string {
+	r := formatHistoryCaptureRegxp
+	if history == 0 {
+		return r.ReplaceAllString(f.String(), "${1}")
+	}
+	return r.ReplaceAllString(f.String(), "${1}"+strconv.FormatInt(int64(history), 10))
 }

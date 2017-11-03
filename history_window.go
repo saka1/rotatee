@@ -1,64 +1,58 @@
 package main
 
-import (
-	"regexp"
-	"strconv"
-)
-
 type historyWindow interface {
 	current() string
 	last() string
-	slide(format string, f func(old string, new string)) string
+	slide(format Format, f func(old string, new string)) string
 }
 
 type fixedHistoryWindow struct {
 	limit int
-	names []string
+	names []Format
 }
 
 func newFixedHistoryWindow(limit int) *fixedHistoryWindow {
 	return &fixedHistoryWindow{
 		limit: limit,
-		names: []string{},
+		names: []Format{},
 	}
 }
 
 func (hw *fixedHistoryWindow) current() string {
-	//TODO range check
-	return evalHistory(hw.names[0], 0)
+	return hw.names[0].evalHistory(0)
 }
 
 func (hw *fixedHistoryWindow) last() string {
 	if len(hw.names) == 0 {
 		return ""
 	}
-	return evalHistory(hw.names[0], len(hw.names)-1)
+	return hw.names[0].evalHistory(len(hw.names)-1)
 }
 
-func (hw *fixedHistoryWindow) slide(format string, f func(old string, new string)) string {
+func (hw *fixedHistoryWindow) slide(format Format, f func(old string, new string)) string {
 	// current and new names as slice
-	cNames := make([]string, len(hw.names))
+	cNames := make([]Format, len(hw.names))
 	copy(cNames, hw.names)
-	nNames := append([]string{format}, hw.names...)
+	nNames := append([]Format{format}, hw.names...)
 	slideNum := len(cNames)
 	if len(cNames) >= hw.limit {
 		slideNum -= 0
 	}
 	for i := slideNum - 1; i >= 0; i-- {
-		oldName := evalHistory(cNames[i], i)
-		newName := evalHistory(nNames[i], i+1)
+		oldName := cNames[i].evalHistory(i)
+		newName := nNames[i].evalHistory(i+1)
 		f(oldName, newName)
 	}
 	if len(cNames) >= hw.limit {
 		hw.names = nNames[:hw.limit]
-		return evalHistory(nNames[hw.limit], hw.limit)
+		return nNames[hw.limit].evalHistory(hw.limit)
 	}
 	hw.names = nNames
 	return ""
 }
 
 type nullHistoryWindow struct {
-	name  string
+	name  Format
 }
 
 func newNullHistoryWindow() *nullHistoryWindow {
@@ -66,23 +60,15 @@ func newNullHistoryWindow() *nullHistoryWindow {
 }
 
 func (w *nullHistoryWindow) current() string {
-	return w.name
+	return w.name.String()
 }
 
 func (w *nullHistoryWindow) last() string {
 	return ""
 }
 
-func (w *nullHistoryWindow) slide(format string, f func(old string, new string)) string {
+func (w *nullHistoryWindow) slide(format Format, f func(old string, new string)) string {
 	w.name = format
 	return ""
 }
 
-//TODO rewrite with Format type
-func evalHistory(format string, history int) string {
-	r := regexp.MustCompile("([^%])%i") //TODO refactor
-	if history == 0 {
-		return r.ReplaceAllString(format, "${1}")
-	}
-	return r.ReplaceAllString(format, "${1}"+strconv.FormatInt(int64(history), 10))
-}
