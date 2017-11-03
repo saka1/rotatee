@@ -43,7 +43,7 @@ func teeLoop(pipeGroup *EventPipeGroup) {
 	reader := os.Stdin
 	readBuf := make([]byte, 1024)
 	for {
-		len, err := reader.Read(readBuf)
+		length, err := reader.Read(readBuf)
 		if err != nil {
 			if err == io.EOF {
 				pipeGroup.Stop()
@@ -52,8 +52,8 @@ func teeLoop(pipeGroup *EventPipeGroup) {
 			log.Panic("Writer goroutine IO failed")
 		}
 		// do copy because 'content' is shared among goroutine(s)
-		content := make([]byte, len)
-		copy(content, readBuf[:len])
+		content := make([]byte, length)
+		copy(content, readBuf[:length])
 		pipeGroup.Broadcast(NewPayload(content))
 		// Also, write to stdout
 		os.Stdout.Write(content)

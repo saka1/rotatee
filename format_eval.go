@@ -1,4 +1,3 @@
-// FormatEvaluator capture specific message, add fileName from its timestamp.
 package main
 
 import (

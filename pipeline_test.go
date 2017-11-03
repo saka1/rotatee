@@ -20,7 +20,7 @@ func Test_EventPipe_test(t *testing.T) {
 	f := F(func(in chan Event, out chan Event) {
 		for {
 			input, ok := <-in
-			t.Logf("receive input", input, ok)
+			t.Logf("receive input: input = %v, ok = %v", input, ok)
 			if !ok {
 				close(out)
 				return
