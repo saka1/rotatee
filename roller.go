@@ -3,19 +3,31 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"os"
+	"math"
 )
 
 type Roller struct {
 	window historyWindow
 }
 
-func NewRoller() Roller {
-	return Roller{newNullHistoryWindow()}
-}
-
-func NewRollerWithHistory(historySize int) Roller {
-	window := newFixedHistoryWindow(historySize)
-	return Roller{window}
+func NewRoller(format Format, historySize int) Roller {
+	if format.HasHistoryNumberSpec() {
+		window := newFixedHistoryWindow(historySize)
+		if historySize == 0 {
+			log.Warn("Infinity history size may cause performance impact. " +
+				"Consider to use `--history` option to limit its size")
+			window = newFixedHistoryWindow(math.MaxInt32)
+		}
+		return Roller{window: window}
+	}
+	if historySize == 0 {
+		return Roller{newNullHistoryWindow()}
+	}
+	if historySize > 32 { //TODO rethink this threshold
+		log.Warn("Large size of history may cause performance impact. " +
+			"Consider to use more smaller size")
+	}
+	return Roller{newFixedHistoryWindow(historySize)}
 }
 
 func (roller Roller) Run(in chan Event, out chan Event) {
@@ -54,7 +66,6 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 				if err != nil {
 					log.WithFields(logrus.Fields{"name": lastName}).Error("Fail to remove file when rotation")
 				}
-				//TODO error handle
 			}
 			currentFile = newFile(roller.window.current())
 			log.WithFields(logrus.Fields{"currentFile": currentFile.Name()}).Info("New file opened")
@@ -78,3 +89,6 @@ func newFile(fileName string) *os.File {
 	}
 	return file
 }
+
+
+

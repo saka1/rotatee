@@ -59,15 +59,14 @@ func (hw *fixedHistoryWindow) slide(format string, f func(old string, new string
 
 type nullHistoryWindow struct {
 	name  string
-	count int
 }
 
 func newNullHistoryWindow() *nullHistoryWindow {
-	return &nullHistoryWindow{"", 0}
+	return &nullHistoryWindow{""}
 }
 
 func (w *nullHistoryWindow) current() string {
-	return evalHistory(w.name, w.count)
+	return w.name
 }
 
 func (w *nullHistoryWindow) last() string {
@@ -75,11 +74,11 @@ func (w *nullHistoryWindow) last() string {
 }
 
 func (w *nullHistoryWindow) slide(format string, f func(old string, new string)) string {
-	w.count += 1
 	w.name = format
 	return ""
 }
 
+//TODO rewrite with Format type
 func evalHistory(format string, history int) string {
 	r := regexp.MustCompile("([^%])%i") //TODO refactor
 	if history == 0 {
