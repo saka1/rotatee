@@ -33,7 +33,7 @@ func (e *EventPipe) Add(stage Stage) {
 
 func (e *EventPipe) Start() {
 	// create "tail" channel
-	// all messages should NOT be handled by this tail process
+	// all messages should NOT be handled by this process
 	tailCh := make(chan Event)
 	go func() {
 		for {
@@ -98,9 +98,10 @@ func (e *EventPipeGroup) Stop() {
 }
 
 func (e *EventPipeGroup) Closed() bool {
-	var result bool = true
 	for _, p := range e.pipes {
-		result = result && p.Closed()
+		if !p.Closed() {
+			return false
+		}
 	}
-	return result
+	return true
 }
