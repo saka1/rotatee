@@ -26,22 +26,23 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose",
-			Usage: "verbose logging to stderr",
+			Usage: "Verbose logging to stderr",
 		},
 		cli.BoolFlag{
 			Name:  "debug",
-			Usage: "enable debug mode (very verbose logging to stderr)",
+			Usage: "Enable debug mode (very verbose logging to stderr)",
 		},
 		cli.StringFlag{
 			Name:  "s, size",
-			Usage: "max file size",
+			Usage: "Max file size",
 		},
 		cli.IntFlag{
 			Name: "history",
-			Usage: "max number of files." +
+			Usage: "Max number of files. " +
 				"After file rotation, rotatee remove the oldest file if the count are exceeded",
 		},
 	}
+	app.Version = APP_VERSION
 	app.Action = func(c *cli.Context) error {
 		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
 		verbose, debug := c.Bool("verbose"), c.Bool("debug")
