@@ -32,7 +32,6 @@ func NewRoller(format Format, historySize int) Roller {
 
 func (roller Roller) Run(in chan Event, out chan Event) {
 	var currentFile *os.File = nil
-
 	for {
 		event, ok := <-in
 		if !ok {
@@ -53,7 +52,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
 		case EVENT_TYPE_INIT:
-			lastName := roller.window.slide(Format(event.fileName), func(old string, new string) {
+			lastName := roller.window.slide(event.format, event.timestamp, func(old string, new string) {
 				log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
 				err := os.Rename(old, new)
 				if err != nil {
@@ -89,6 +88,3 @@ func newFile(fileName string) *os.File {
 	}
 	return file
 }
-
-
-

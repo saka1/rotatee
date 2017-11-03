@@ -2,11 +2,13 @@ package main
 
 import (
 	"testing"
+	"time"
 )
 
 func Test_historyWindow_test(t *testing.T) {
 	count := 0
 	format := Format("name%i")
+	t0 := time.Now()
 	f := func(old string, new string) {
 		t.Logf("old, new = %v, %v", old, new)
 		count += 1
@@ -21,11 +23,11 @@ func Test_historyWindow_test(t *testing.T) {
 		}
 	}
 	win := newFixedHistoryWindow(3)
-	win.slide(format, f)
+	win.slide(format, t0, f)
 	t.Log("-------------")
-	win.slide(format, f)
+	win.slide(format, t0, f)
 	t.Log("-------------")
-	win.slide(format, f)
+	win.slide(format, t0, f)
 	t.Log("-------------")
 	if win.current() != "name" {
 		t.Fatalf("unexpected current = %v", win.current())
@@ -33,7 +35,7 @@ func Test_historyWindow_test(t *testing.T) {
 	if win.last() != "name2" {
 		t.Fatalf("unexpected last = %v", win.last())
 	}
-	expired := win.slide(format, f)
+	expired := win.slide(format, t0, f)
 	if count != (1 + 2 + 3) {
 		t.Fatalf("unexpected number of calls = %v", count)
 	}

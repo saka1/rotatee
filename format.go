@@ -3,11 +3,13 @@ package main
 import (
 	"regexp"
 	"strconv"
+	"time"
+	"github.com/jehiah/go-strftime"
 )
 
 var (
-	formatHistorySpecRegexp   = regexp.MustCompile("[^%]%i")
-	formatHistoryCaptureRegxp = regexp.MustCompile("([^%])%i")
+	formatHistorySpecRegexp    = regexp.MustCompile("[^%]%i")
+	formatHistoryCaptureRegexp = regexp.MustCompile("([^%])%i")
 )
 
 type Format string
@@ -20,10 +22,17 @@ func (f Format) HasHistoryNumberSpec() bool {
 	return formatHistorySpecRegexp.FindString(f.String()) != ""
 }
 
-func (f Format) evalHistory(history int) string {
-	r := formatHistoryCaptureRegxp
+func (f Format) evalHistory(t time.Time, history int) string {
+	r := formatHistoryCaptureRegexp
 	if history == 0 {
-		return r.ReplaceAllString(f.String(), "${1}")
+		str := r.ReplaceAllString(f.String(), "${1}")
+		return strftime.Format(str, t)
 	}
-	return r.ReplaceAllString(f.String(), "${1}"+strconv.FormatInt(int64(history), 10))
+	str := r.ReplaceAllString(f.String(), "${1}"+strconv.FormatInt(int64(history), 10))
+	return strftime.Format(str, t)
+}
+
+//TODO use after evalHistory
+func (f Format) strftime(t time.Time) Format {
+	return Format(strftime.Format(f.String(), t))
 }

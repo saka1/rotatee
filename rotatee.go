@@ -31,9 +31,10 @@ func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 		if setting.maxFileSize != 0 {
 			pipe.Add(NewScaler(setting.maxFileSize))
 		}
+		format := Format(arg)
 		pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
-		pipe.Add(NewFormatEval(arg))
-		pipe.Add(NewRoller(Format(arg), setting.historySize))
+		pipe.Add(NewFormatSetter(format))
+		pipe.Add(NewRoller(format, setting.historySize))
 		pipeGroup.Add(&pipe)
 	}
 	return pipeGroup

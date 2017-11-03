@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	EVENT_TYPE_PAYLOAD = iota
+	EVENT_TYPE_PAYLOAD             = iota
 	EVENT_TYPE_CHANGE_WRITE_TARGET
 	EVENT_TYPE_INIT
 )
@@ -13,12 +13,12 @@ const (
 type Event struct {
 	eventType int
 	payload   []byte
-	fileName  string
+	format    Format
 	timestamp time.Time
 }
 
 func emptyEvent(eventType int) Event {
-	return Event{eventType, nil, "", time.Now()}
+	return Event{eventType, nil, Format(""), time.Now()}
 }
 
 func NewPayload(payload []byte) Event {
