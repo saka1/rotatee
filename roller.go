@@ -67,7 +67,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 				}
 			}
 			currentFile = newFile(roller.window.current())
-			log.WithFields(logrus.Fields{"currentFile": currentFile.Name()}).Info("New file opened")
+			log.WithFields(logrus.Fields{"currentFile": currentFile, "name": currentFile.Name()}).Info("New file opened")
 		case EVENT_TYPE_PAYLOAD:
 			_, err := currentFile.Write(event.payload)
 			if err != nil {
