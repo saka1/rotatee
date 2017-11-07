@@ -38,7 +38,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name: "history",
-			Usage: "Max number of files. " +
+			Usage: "Limit number of files to keep. " +
 				"After file rotation, rotatee remove the oldest file if the count are exceeded",
 		},
 	}

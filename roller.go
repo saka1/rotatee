@@ -14,8 +14,8 @@ func NewRoller(format Format, historySize int) Roller {
 	if format.HasHistoryNumberSpec() {
 		window := newFixedHistoryWindow(historySize)
 		if historySize == 0 {
-			log.Warn("Infinity history size may cause performance impact. " +
-				"Consider to use `--history` option to limit its size")
+			log.Warn("Unlimited history size may cause performance impact. " +
+				"Consider to use `--history` option")
 			window = newFixedHistoryWindow(math.MaxInt32)
 		}
 		return Roller{window: window}

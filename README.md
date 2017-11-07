@@ -5,7 +5,9 @@
 rotatee is a simple program that works like tee with some extension:
 
 - rotatee copies input to output file(s) with rotation.
-- Rotation is period-based
+- Multiple rotation methods supported
+  - size-based
+  - period-based
 
 rotatee is inspired by some popular programs such as 
 
@@ -40,16 +42,13 @@ hoge-13.log
 
 Size-based rolling:
 ```bash
-$ echo "abcdefg" | ./rotatee --size 3B /tmp/size%i
+$ echo "abcdefg" | ./rotatee --size 3B --history 10 /tmp/size%i.log
 abcdefg
-$ cat /tmp/size1 /tmp/size2 /tmp/size3
+$ cat /tmp/size2.log /tmp/size1.log /tmp/size.log
 abcdefg
 ```
 
 
 ## TODO
 - Add more test cases
-- Size-based rolling
-- Max-history(limit number of files to keep)
 - Rolling with archive
-- Improve some inconsistent behavior
