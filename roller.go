@@ -8,9 +8,11 @@ import (
 
 type Roller struct {
 	window historyWindow
+	setting RotateeSetting
 }
 
-func NewRoller(format Format, historySize int) Roller {
+func NewRoller(format Format, setting RotateeSetting) Roller {
+	historySize := setting.historySize
 	if format.HasHistoryNumberSpec() {
 		window := newFixedHistoryWindow(historySize)
 		if historySize == 0 {
@@ -21,13 +23,13 @@ func NewRoller(format Format, historySize int) Roller {
 		return Roller{window: window}
 	}
 	if historySize == 0 {
-		return Roller{newNullHistoryWindow()}
+		return Roller{newNullHistoryWindow(), setting}
 	}
 	if historySize > 32 { //TODO rethink this threshold
 		log.Warn("Large size of history may cause performance impact. " +
 			"Consider to use more smaller size")
 	}
-	return Roller{newFixedHistoryWindow(historySize)}
+	return Roller{newFixedHistoryWindow(historySize), setting}
 }
 
 func (roller Roller) Run(in chan Event, out chan Event) {
@@ -66,7 +68,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 					log.WithFields(logrus.Fields{"name": lastName}).Error("Fail to remove file when rotation")
 				}
 			}
-			currentFile = newFile(roller.window.current())
+			currentFile = newFile(roller.window.current(), roller.setting.appendMode)
 			log.WithFields(logrus.Fields{"currentFile": currentFile, "name": currentFile.Name()}).Info("New file opened")
 		case EVENT_TYPE_PAYLOAD:
 			_, err := currentFile.Write(event.payload)
@@ -80,8 +82,12 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 	}
 }
 
-func newFile(fileName string) *os.File {
-	file, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
+func newFile(fileName string, appendMode bool) *os.File {
+	flag := os.O_RDWR|os.O_CREATE
+	if appendMode {
+		flag |= os.O_APPEND
+	}
+	file, err := os.OpenFile(fileName, flag, 0644)
 	if err != nil {
 		log.WithFields(logrus.Fields{"fileName": fileName, "err": err}).Error("Fail to open file")
 		return nil

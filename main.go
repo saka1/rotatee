@@ -41,6 +41,10 @@ func main() {
 			Usage: "Limit number of files to keep. " +
 				"After file rotation, rotatee remove the oldest file if the count are exceeded",
 		},
+		cli.BoolFlag{
+			Name:"a, appendMode",
+			Usage: "Open output files with appendMode mode",
+		},
 	}
 	app.Version = APP_VERSION
 	app.Action = func(c *cli.Context) error {
@@ -57,11 +61,13 @@ func main() {
 			}
 		}
 		historySize := c.GlobalInt("history")
+		appendMode := c.GlobalBool("appendMode")
 		rotatee := NewRotatee(RotateeSetting{
 			args:        c.Args(),
 			verbose:     verbose,
 			maxFileSize: int64(maxFileSize),
 			historySize: historySize,
+			appendMode:  appendMode,
 		})
 		rotatee.Start()
 		return nil

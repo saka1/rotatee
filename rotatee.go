@@ -22,6 +22,7 @@ type RotateeSetting struct {
 	verbose     bool
 	maxFileSize int64
 	historySize int
+	appendMode  bool
 }
 
 func setupEventPipe(setting RotateeSetting) EventPipeGroup {
@@ -34,7 +35,7 @@ func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 		format := Format(arg)
 		pipe.Add(NewTimer(DetectSeries(arg, time.Now())))
 		pipe.Add(NewFormatSetter(format))
-		pipe.Add(NewRoller(format, setting.historySize))
+		pipe.Add(NewRoller(format, setting))
 		pipeGroup.Add(&pipe)
 	}
 	return pipeGroup
