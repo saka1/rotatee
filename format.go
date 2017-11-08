@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/jehiah/go-strftime"
 	"regexp"
 	"strconv"
 	"time"
-	"github.com/jehiah/go-strftime"
 )
 
 var (

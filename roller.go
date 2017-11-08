@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/sirupsen/logrus"
-	"os"
 	"math"
+	"os"
 )
 
 type Roller struct {
-	window historyWindow
+	window  historyWindow
 	setting RotateeSetting
 }
 
@@ -48,8 +48,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			err := currentFile.Close()
 			if err != nil {
 				log.WithFields(
-					logrus.Fields{"err": err.Error(), "name": currentFile.Name(),
-					}).Error("Fail to close file when rotation")
+					logrus.Fields{"err": err.Error(), "name": currentFile.Name()}).Error("Fail to close file when rotation")
 			}
 			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
@@ -83,7 +82,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 }
 
 func newFile(fileName string, appendMode bool) *os.File {
-	flag := os.O_RDWR|os.O_CREATE
+	flag := os.O_RDWR | os.O_CREATE
 	if appendMode {
 		flag |= os.O_APPEND
 	}

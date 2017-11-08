@@ -42,7 +42,7 @@ func main() {
 				"After file rotation, rotatee remove the oldest file if the count are exceeded",
 		},
 		cli.BoolFlag{
-			Name:"a, appendMode",
+			Name:  "a, appendMode",
 			Usage: "Open output files with appendMode mode",
 		},
 	}

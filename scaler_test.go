@@ -67,7 +67,7 @@ func Test_scaler_large(t *testing.T) {
 func Test_scaler_smallMsg(t *testing.T) {
 	in, out := make(chan Event, 32), make(chan Event, 32)
 	scaler := NewScaler(100)
-	for i := 0; i<10; i++ {
+	for i := 0; i < 10; i++ {
 		in <- NewPayload([]byte("hello")) // 5byte * 10msg
 	}
 	close(in)

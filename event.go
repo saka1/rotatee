@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	EVENT_TYPE_PAYLOAD             = iota
+	EVENT_TYPE_PAYLOAD = iota
 	EVENT_TYPE_CHANGE_WRITE_TARGET
 	EVENT_TYPE_INIT
 )
