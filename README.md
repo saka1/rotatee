@@ -1,6 +1,7 @@
 # rotatee
 
 [![Build Status](https://travis-ci.org/saka1/rotatee.svg?branch=master)](https://travis-ci.org/saka1/rotatee)
+[![Go Report Card](https://goreportcard.com/badge/github.com/saka1/rotatee)](https://goreportcard.com/report/github.com/saka1/rotatee)
 
 rotatee is a simple program that works like tee with some extension:
 
