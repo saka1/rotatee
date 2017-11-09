@@ -1,3 +1,9 @@
-  language: go
-  go:
-    - 1.x
+language: go
+sudo: false
+go:
+  - tip
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - go test -v
+  - $GOPATH/bin/goveralls -service=travis-ci
