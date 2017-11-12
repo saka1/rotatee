@@ -14,10 +14,19 @@ type Rotatee struct {
 }
 
 func NewRotatee(setting RotateeSetting) *Rotatee {
+	// set default value
+	if setting.stdin == nil {
+		setting.stdin = os.Stdin
+	}
+	if setting.stdout == nil {
+		setting.stdout = os.Stdout
+	}
 	return &Rotatee{setting: setting}
 }
 
 type RotateeSetting struct {
+	stdin       io.Reader
+	stdout      io.Writer
 	args        []string
 	verbose     bool
 	maxFileSize int64
@@ -41,15 +50,15 @@ func setupEventPipe(setting RotateeSetting) EventPipeGroup {
 	return pipeGroup
 }
 
-func teeLoop(pipeGroup *EventPipeGroup) {
-	reader := os.Stdin
+func (r *Rotatee) teeLoop(pipeGroup *EventPipeGroup) {
+	reader := r.setting.stdin
 	readBuf := make([]byte, 1024)
 	for {
 		length, err := reader.Read(readBuf)
 		if err != nil {
 			if err == io.EOF {
 				pipeGroup.Stop()
-				os.Exit(0)
+				return
 			}
 			log.Panic("Writer goroutine IO failed")
 		}
@@ -58,7 +67,7 @@ func teeLoop(pipeGroup *EventPipeGroup) {
 		copy(content, readBuf[:length])
 		pipeGroup.Broadcast(NewPayload(content))
 		// Also, write to stdout
-		os.Stdout.Write(content)
+		r.setting.stdout.Write(content)
 	}
 }
 
@@ -67,5 +76,5 @@ func (r *Rotatee) Start() {
 	pipeGroup := setupEventPipe(r.setting)
 	pipeGroup.Start()
 	pipeGroup.Broadcast(NewInit())
-	teeLoop(&pipeGroup)
+	r.teeLoop(&pipeGroup)
 }
