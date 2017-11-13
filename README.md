@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/saka1/rotatee.svg?branch=master)](https://travis-ci.org/saka1/rotatee)
 [![Go Report Card](https://goreportcard.com/badge/github.com/saka1/rotatee)](https://goreportcard.com/report/github.com/saka1/rotatee)
-[![Coverage Status](https://coveralls.io/repos/github/saka1/rotatee/badge.svg?branch=master)](https://coveralls.io/github/saka1/rotatee?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/saka1/rotatee/badge.svg?branch=master&v=2.0)](https://coveralls.io/github/saka1/rotatee?branch=master)
 
 rotatee is a simple program that works like tee with some extension:
 
