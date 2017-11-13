@@ -46,7 +46,7 @@ func main() {
 			Usage: "Open output files with appendMode mode",
 		},
 	}
-	app.Version = APP_VERSION
+	app.Version = AppVersion
 	app.Action = func(c *cli.Context) error {
 		log.WithFields(logrus.Fields{"Args": c.Args()}).Debug("Parsed input arguments")
 		verbose, debug := c.Bool("verbose"), c.Bool("debug")

@@ -17,7 +17,7 @@ func (s *Scaler) Run(in chan Event, out chan Event) {
 			return
 		}
 		switch event.eventType {
-		case EVENT_TYPE_PAYLOAD:
+		case EventTypePayload:
 			unprocessedPayload := event.payload
 			for s.count+int64(len(unprocessedPayload)) > s.limit {
 				acceptable := s.limit - s.count

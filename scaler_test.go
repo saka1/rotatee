@@ -27,7 +27,7 @@ func Test_scaler_interleave(t *testing.T) {
 	if ev := <-out; string(ev.payload) != "hell" {
 		t.Fatal()
 	}
-	if ev := <-out; ev.eventType != EVENT_TYPE_CHANGE_WRITE_TARGET {
+	if ev := <-out; ev.eventType != EventTypeChangeWriteTarget {
 		t.Fatal()
 	}
 	if ev := <-out; string(ev.payload) != "o" {
@@ -47,13 +47,13 @@ func Test_scaler_large(t *testing.T) {
 	if ev := <-out; string(ev.payload) != "he" {
 		t.Fatalf("invalid receive: %v", string(ev.payload))
 	}
-	if ev := <-out; ev.eventType != EVENT_TYPE_CHANGE_WRITE_TARGET {
+	if ev := <-out; ev.eventType != EventTypeChangeWriteTarget {
 		t.Fatal()
 	}
 	if ev := <-out; string(ev.payload) != "ll" {
 		t.Fatalf("invalid receive: %v", string(ev.payload))
 	}
-	if ev := <-out; ev.eventType != EVENT_TYPE_CHANGE_WRITE_TARGET {
+	if ev := <-out; ev.eventType != EventTypeChangeWriteTarget {
 		t.Fatal()
 	}
 	if ev := <-out; string(ev.payload) != "o" {

@@ -16,7 +16,7 @@ func (fs FormatSetter) Run(in chan Event, out chan Event) {
 			return
 		}
 		switch event.eventType {
-		case EVENT_TYPE_INIT, EVENT_TYPE_CHANGE_WRITE_TARGET:
+		case EventTypeInit, EventTypeChangeWriteTarget:
 			event.format = fs.format
 			out <- event
 		default:

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	FORMAT_UNIT_REGEXP = regexp.MustCompile("%[SMHdmy]")
-	FORMAT_UNIT_SCORE  = map[string]int{
+	unitRegexp   = regexp.MustCompile("%[SMHdmy]")
+	unitScoreMap = map[string]int{
 		"S": 1,
 		"M": 60,
 		"H": 60 * 60,
@@ -23,7 +23,7 @@ var (
 // Detect which series to use
 //
 func DetectSeries(format string, t0 time.Time) Series {
-	if FORMAT_UNIT_REGEXP.MatchString(format) {
+	if unitRegexp.MatchString(format) {
 		return NewPeriodSeriesWithGuess(format, t0)
 	}
 	return NewConstSeries(format)
@@ -52,10 +52,6 @@ func NewPeriodSeriesWithGuess(format string, t0 time.Time) Series {
 	if err != nil {
 		panic("todo impl") //TODO
 	}
-	return PeriodSeries{t0, format, period}
-}
-
-func NewPeriodSeries(format string, t0 time.Time, period time.Duration) Series {
 	return PeriodSeries{t0, format, period}
 }
 
@@ -100,9 +96,9 @@ func (s ConstSeries) Sub(t time.Time) time.Duration {
  * In general, the most smallest pattern letter is used.
  */
 func guessPeriod(format string) (time.Duration, error) {
-	re := FORMAT_UNIT_REGEXP
+	re := unitRegexp
 	units := re.FindAllString(format, -1)
-	score := FORMAT_UNIT_SCORE
+	score := unitScoreMap
 	// find minimum unit
 	minScore := math.MaxInt32
 	for _, u := range units {

@@ -33,7 +33,7 @@ func NewRoller(format Format, setting RotateeSetting) Roller {
 }
 
 func (roller Roller) Run(in chan Event, out chan Event) {
-	var currentFile *os.File = nil
+	var currentFile *os.File
 	for {
 		event, ok := <-in
 		if !ok {
@@ -44,7 +44,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			return
 		}
 		switch event.eventType {
-		case EVENT_TYPE_CHANGE_WRITE_TARGET:
+		case EventTypeChangeWriteTarget:
 			err := currentFile.Close()
 			if err != nil {
 				log.WithFields(
@@ -52,7 +52,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			}
 			log.WithFields(logrus.Fields{"currentFile": currentFile}).Info("Current file closed")
 			fallthrough
-		case EVENT_TYPE_INIT:
+		case EventTypeInit:
 			lastName := roller.window.slide(event.format, event.timestamp, func(old string, new string) {
 				log.WithFields(logrus.Fields{"old": old, "new": new}).Info("History rotation")
 				err := os.Rename(old, new)
@@ -69,7 +69,7 @@ func (roller Roller) Run(in chan Event, out chan Event) {
 			}
 			currentFile = newFile(roller.window.current(), roller.setting.appendMode)
 			log.WithFields(logrus.Fields{"currentFile": currentFile, "name": currentFile.Name()}).Info("New file opened")
-		case EVENT_TYPE_PAYLOAD:
+		case EventTypePayload:
 			_, err := currentFile.Write(event.payload)
 			if err != nil {
 				log.WithFields(logrus.Fields{"err": err}).Panic("Reader goroutine IO failed")

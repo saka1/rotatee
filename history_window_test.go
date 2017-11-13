@@ -11,7 +11,7 @@ func Test_historyWindow_test(t *testing.T) {
 	t0 := time.Now()
 	f := func(old string, new string) {
 		t.Logf("old, new = %v, %v", old, new)
-		count += 1
+		count++
 		if count == 1 && !(old == "name" && new == "name1") {
 			t.Fatal()
 		}
