@@ -57,3 +57,30 @@ func Test_rotatee_sizeBasedRotation(t *testing.T) {
 		t.Fatalf("'foo2.log' must not exist")
 	}
 }
+
+func Test_rotatee_appendMode(t *testing.T) {
+	// Suppress logger
+	origLevel := log.Level
+	log.SetLevel(logrus.ErrorLevel)
+	defer log.SetLevel(origLevel)
+
+	var stdin, stdout bytes.Buffer
+	tmpdir, _ := ioutil.TempDir("", "")
+	defer os.RemoveAll(tmpdir)
+	tmpfile := filepath.Join(tmpdir, "foo.log")
+	err := ioutil.WriteFile(tmpfile, []byte("abc"), 0644)
+	if err != nil {
+		t.Fatal()
+	}
+	rotatee := NewRotatee(RotateeSetting{
+		stdin:      &stdin,
+		stdout:     &stdout,
+		args:       []string{filepath.Join(tmpdir, "foo.log")},
+		appendMode: true,
+	})
+	stdin.Write([]byte("def"))
+	rotatee.Start()
+	if output, err := ioutil.ReadFile(tmpfile); string(output) != "abcdef" || err != nil {
+		t.Fatalf("invalid state: output = %v, err = %v", output, err)
+	}
+}
